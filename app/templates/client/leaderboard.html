@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard — Molayman Lottery Foundation{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-3xl font-bold text-slate-800">Leaderboard</h2>
+        <p class="text-slate-500 mt-1">Top discounts (privacy-safe)</p>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('client.dashboard') }}">Back</a>
+    </div>
+
+    <div class="card rounded-3xl p-6 mb-6">
+      <form method="get" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+        <div class="flex-1">
+          <label class="block text-xs text-slate-500" for="class_fee_id">Class</label>
+          <select id="class_fee_id" name="class_fee_id" class="mt-1 w-full">
+            <option value="">All classes</option>
+            {% for fee in class_fees %}
+              <option value="{{ fee.id }}" {% if selected_fee and selected_fee.id == fee.id %}selected{% endif %}>{{ fee.class_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary text-sm">Show</button>
+      </form>
+    </div>
+
+    <div class="card rounded-3xl p-6">
+      <div class="space-y-3">
+        {% for r in rows %}
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-white border border-slate-100">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="font-semibold text-slate-800">{{ r.label }}</div>
+                <div class="text-sm text-slate-500">{{ r.class_name }}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-extrabold text-slate-900">{{ r.discount }}%</div>
+                <div class="text-xs text-slate-400">Total discount</div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="text-center py-10 text-slate-400">
+            <div class="text-4xl mb-2">🏆</div>
+            <p>No leaderboard data yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

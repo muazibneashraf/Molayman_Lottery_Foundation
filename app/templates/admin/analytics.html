@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Analytics — Admin{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-3xl font-bold text-slate-800">Analytics</h2>
+        <p class="text-slate-500 mt-1">Quick stats for this system</p>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('admin.dashboard') }}">Back</a>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="card rounded-3xl p-6">
+        <div class="text-sm text-slate-500">Users</div>
+        <div class="text-3xl font-extrabold text-slate-800 mt-1">{{ total_users }}</div>
+      </div>
+      <div class="card rounded-3xl p-6">
+        <div class="text-sm text-slate-500">Applications</div>
+        <div class="text-3xl font-extrabold text-slate-800 mt-1">{{ total_apps }}</div>
+      </div>
+      <div class="card rounded-3xl p-6">
+        <div class="text-sm text-slate-500">Payments submitted</div>
+        <div class="text-3xl font-extrabold text-slate-800 mt-1">{{ paid }}</div>
+      </div>
+
+      <div class="card rounded-3xl p-6">
+        <div class="text-sm text-slate-500">Pending</div>
+        <div class="text-3xl font-extrabold text-amber-700 mt-1">{{ pending }}</div>
+      </div>
+      <div class="card rounded-3xl p-6">
+        <div class="text-sm text-slate-500">Accepted</div>
+        <div class="text-3xl font-extrabold text-green-700 mt-1">{{ accepted }}</div>
+      </div>
+      <div class="card rounded-3xl p-6">
+        <div class="text-sm text-slate-500">Rejected</div>
+        <div class="text-3xl font-extrabold text-red-700 mt-1">{{ rejected }}</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

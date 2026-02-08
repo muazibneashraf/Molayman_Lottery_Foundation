@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Application #{{ app.id }} — Admin{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 mb-8 fade-in">
+      <div class="flex items-center gap-4">
+        <img
+          src="{{ url_for('static', filename='images/caricatures/admin.png') }}"
+          alt="Admin"
+          class="w-16 h-16 rounded-xl object-cover caricature"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="hidden w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center text-3xl">🧑‍💼</div>
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-2xl font-bold">#{{ app.id }}</div>
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Application #{{ app.id }}</h2>
+          <p class="text-slate-500">{{ user.name }} ({{ user.email }}) • {{ app.class_fee.class_name }}</p>
+        </div>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('admin.dashboard') }}">Back</a>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Status & Payment -->
+      <div class="space-y-6">
+        <div class="card rounded-3xl p-6 fade-in stagger-1">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-lg">⚙️</div>
+            <h3 class="font-bold text-lg text-slate-800">Status</h3>
+          </div>
+          <form method="post" action="{{ url_for('admin.set_application_status', app_id=app.id) }}" class="flex gap-3">
+            <select name="status" class="flex-1" aria-label="Application status" title="Application status">
+              <option value="pending" {% if app.status=='pending' %}selected{% endif %}>Pending</option>
+              <option value="accepted" {% if app.status=='accepted' %}selected{% endif %}>Accepted</option>
+              <option value="rejected" {% if app.status=='rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+            <button type="submit" class="btn btn-primary text-sm">Update</button>
+          </form>
+        </div>
+
+        <div class="card rounded-3xl p-6 fade-in stagger-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 text-lg">💳</div>
+            <h3 class="font-bold text-lg text-slate-800">Payment Details</h3>
+          </div>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between p-3 rounded-xl bg-slate-50">
+              <span class="text-slate-500">Original Fee</span>
+              <span class="font-semibold text-slate-800">{{ app.fee_amount|bdt }}</span>
+            </div>
+            <div class="flex justify-between p-3 rounded-xl bg-primary/5">
+              <span class="text-slate-500">Discount</span>
+              <span class="font-semibold text-primary">{{ app.total_discount_pct }}%</span>
+            </div>
+            <div class="flex justify-between p-3 rounded-xl bg-emerald-50">
+              <span class="text-slate-500">Payable Amount</span>
+              <span class="font-bold text-emerald-600">{{ app.discounted_amount|bdt }}</span>
+            </div>
+          </div>
+          
+          {% if app.payment_method %}
+            <div class="mt-4 p-4 rounded-xl bg-green-50 border border-green-200">
+              <div class="text-sm text-green-800">
+                <strong>Payment Received</strong><br>
+                Method: {{ app.payment_method }}<br>
+                Reference: {{ app.payment_reference }}<br>
+                Date: {{ app.paid_at }}
+                {% if app.payment_proof_filename %}<br>Proof: {{ app.payment_proof_filename }}{% endif %}
+              </div>
+            </div>
+          {% else %}
+            <div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200">
+              <p class="text-sm text-amber-700">No payment submitted yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="card rounded-3xl p-6 fade-in stagger-3 flex flex-col max-h-[600px]">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary text-lg">💬</div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-800">Chat</h3>
+            <p class="text-xs text-slate-400">You appear as "I am Molay Man"</p>
+          </div>
+        </div>
+
+        <div class="flex-1 space-y-3 overflow-auto pr-2 mb-4">
+          {% for m in messages %}
+            <div class="{% if m.sender_role=='admin' %}flex justify-end{% else %}flex justify-start{% endif %}">
+              <div class="max-w-[80%] {% if m.sender_role=='admin' %}bg-gradient-to-r from-secondary to-secondary/90 text-white{% else %}bg-slate-100 text-slate-800{% endif %} rounded-2xl px-4 py-3">
+                <div class="text-xs {% if m.sender_role=='admin' %}text-white/70{% else %}text-slate-400{% endif %} mb-1">{{ m.sender_name }} • {{ m.created_at.strftime('%H:%M') }}</div>
+                <div class="whitespace-pre-wrap text-sm">{{ m.message }}</div>
+              </div>
+            </div>
+          {% else %}
+            <div class="text-center py-8 text-slate-400 text-sm">No messages yet.</div>
+          {% endfor %}
+        </div>
+
+        <form method="post" action="{{ url_for('admin.chat_send', app_id=app.id) }}" class="flex gap-2 pt-4 border-t border-slate-100">
+          <input name="message" class="flex-1 text-sm" placeholder="Type a message…" required />
+          <button type="submit" class="btn btn-gradient text-sm py-2 px-4">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

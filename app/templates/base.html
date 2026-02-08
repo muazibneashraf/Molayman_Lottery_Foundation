@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Molayman Lottery Foundation{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#6366f1',
+              secondary: '#ec4899',
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  </head>
+  <body class="full-page">
+
+    <!-- Subtle watermark background (caricature) on all pages -->
+    <div class="page-watermark" aria-hidden="true">
+      <img
+        class="page-watermark-img"
+        src="{{ url_for('static', filename='images/caricatures/watermark.png') }}"
+        alt=""
+      />
+    </div>
+
+    {% if request.path != '/' %}
+      <!-- Floating mascots (caricatures) across all pages except home -->
+      <div class="caricature-corners" aria-hidden="true">
+        <img
+          src="{{ url_for('static', filename='images/caricatures/extra1.png') }}"
+          alt=""
+          class="caricature caricature-corner tl"
+          onerror="this.style.display='none';"
+        />
+        <img
+          src="{{ url_for('static', filename='images/caricatures/extra2.png') }}"
+          alt=""
+          class="caricature caricature-corner tr"
+          onerror="this.style.display='none';"
+        />
+        <img
+          src="{{ url_for('static', filename='images/caricatures/extra3.png') }}"
+          alt=""
+          class="caricature caricature-corner bl"
+          onerror="this.style.display='none';"
+        />
+        <img
+          src="{{ url_for('static', filename='images/caricatures/extra4.png') }}"
+          alt=""
+          class="caricature caricature-corner br"
+          onerror="this.style.display='none';"
+        />
+      </div>
+    {% endif %}
+
+    <header class="relative z-10 w-full bg-white/40 backdrop-blur-md border-b border-white/50" id="mainHeader">
+      <nav class="w-full px-8 sm:px-12 lg:px-20 xl:px-32 py-4 flex items-center justify-between">
+        <a href="{{ url_for('main.index') }}" class="brand-logo">
+          <span class="logo-icon">🎰</span>
+          <span class="font-bold text-lg text-slate-800">Molayman Lottery Foundation</span>
+        </a>
+
+        <div class="flex items-center gap-3">
+          {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+              <a class="nav-pill" href="{{ url_for('admin.dashboard') }}">Admin</a>
+            {% else %}
+              <a class="nav-pill" href="{{ url_for('client.dashboard') }}">Dashboard</a>
+              <a class="nav-pill" href="{{ url_for('client.profile') }}">Profile</a>
+            {% endif %}
+            <form method="post" action="{{ url_for('auth.logout') }}">
+              <button type="submit" class="btn btn-secondary text-sm">Logout</button>
+            </form>
+          {% else %}
+            <a class="nav-pill" href="{{ url_for('auth.login') }}">Login</a>
+            <a class="btn btn-primary text-sm" href="{{ url_for('auth.signup') }}">Sign up</a>
+          {% endif %}
+        </div>
+      </nav>
+    </header>
+
+    <main class="main-content relative z-10 w-full pb-16 flex flex-col">
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          <div class="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
+            {% for category, msg in messages %}
+              <div class="flash-message card px-4 py-3 text-sm {% if category == 'error' %}border-red-300 bg-red-50{% elif category == 'success' %}border-green-300 bg-green-50{% else %}border-primary/30{% endif %}">
+                <span class="font-semibold capitalize">{{ category }}</span>: {{ msg }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+
+    {% if current_user.is_authenticated and not current_user.is_admin %}
+    <!-- Floating Action Button -->
+    <div class="fab-menu" id="fabMenu">
+      <div class="fab-items">
+        <a class="fab-item" href="{{ url_for('client.dashboard') }}">📋 Dashboard</a>
+        <a class="fab-item" href="{{ url_for('client.profile') }}">👤 Profile</a>
+      </div>
+      <button class="fab-btn" onclick="document.getElementById('fabMenu').classList.toggle('open')">⚡</button>
+    </div>
+    {% endif %}
+
+    <script>
+      // Auto-add CSRF token to all forms (Flask-WTF CSRFProtect).
+      (function () {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        const token = meta ? meta.getAttribute('content') : '';
+        if (!token) return;
+        for (const form of document.querySelectorAll('form')) {
+          form.addEventListener('submit', () => {
+            if (form.querySelector('input[name="csrf_token"]')) return;
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'csrf_token';
+            input.value = token;
+            form.appendChild(input);
+          });
+        }
+      })();
+
+      // Remove flash messages after 5 seconds
+      setTimeout(() => {
+        document.querySelectorAll('.flash-message').forEach(el => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateX(100%)';
+          setTimeout(() => el.remove(), 300);
+        });
+      }, 5000);
+
+      // Scroll reveal for all pages
+      function handleGlobalReveal() {
+        document.querySelectorAll('.reveal').forEach(el => {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < window.innerHeight - 80) el.classList.add('visible');
+        });
+      }
+      window.addEventListener('scroll', handleGlobalReveal);
+      window.addEventListener('load', handleGlobalReveal);
+
+      // Header scroll effect
+      const mainHeader = document.getElementById('mainHeader');
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 20) mainHeader.classList.add('scrolled');
+        else mainHeader.classList.remove('scrolled');
+      });
+
+      // Spotlight cursor effect
+      document.addEventListener('mousemove', e => {
+        document.querySelectorAll('.spotlight-card').forEach(card => {
+          const r = card.getBoundingClientRect();
+          card.style.setProperty('--spotlight-x', (e.clientX - r.left) + 'px');
+          card.style.setProperty('--spotlight-y', (e.clientY - r.top) + 'px');
+        });
+      });
+
+      // Toast notification helper
+      window.showToast = function(message, duration = 3000) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = message;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 400);
+        }, duration);
+      };
+    </script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

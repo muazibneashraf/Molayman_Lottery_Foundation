@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — Molayman Lottery Foundation{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <!-- Header with caricature -->
+    <div class="flex items-center gap-6 mb-8 fade-in">
+      <img 
+        src="{{ url_for('static', filename='images/caricatures/admin.png') }}" 
+        alt="Admin" 
+        class="w-20 h-20 rounded-2xl object-cover caricature"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+      />
+      <div class="hidden w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center text-3xl">👑</div>
+      <div>
+        <h2 class="text-3xl font-bold text-slate-800">Admin Dashboard</h2>
+        <p class="text-slate-500 mt-1">Manage class fees and review applications</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a class="nav-pill" href="{{ url_for('admin.analytics') }}">Analytics</a>
+          <a class="nav-pill" href="{{ url_for('admin.audit_log') }}">Audit Log</a>
+          <a class="nav-pill" href="{{ url_for('admin.announcements') }}">Announcements</a>
+          <a class="nav-pill" href="{{ url_for('admin.fair_play') }}">Fair Play</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Class Fees -->
+      <div class="card rounded-3xl p-6 fade-in stagger-1">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-xl">💰</div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-800">Class Fees</h3>
+            <p class="text-slate-500 text-sm">Update admission amounts</p>
+          </div>
+        </div>
+        <div class="space-y-3">
+          {% for fee in fees %}
+            <form method="post" action="{{ url_for('admin.update_fee', fee_id=fee.id) }}" class="flex items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-white border border-slate-100">
+              <div>
+                <div class="font-semibold text-slate-800">{{ fee.class_name }}</div>
+                <div class="text-xs text-slate-400">Updated: {{ fee.updated_at.strftime('%Y-%m-%d') }}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input name="amount_bdt" type="number" min="1" class="w-28" value="{{ fee.amount_bdt }}" aria-label="Amount (BDT)" title="Amount (BDT)" />
+                <button type="submit" class="btn btn-primary text-sm py-2 px-4">Save</button>
+              </div>
+            </form>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Applications -->
+      <div class="card rounded-3xl p-6 fade-in stagger-2">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-500 flex items-center justify-center text-white text-xl">📋</div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-800">Recent Applications</h3>
+            <p class="text-slate-500 text-sm">Review and manage submissions</p>
+          </div>
+        </div>
+        <div class="space-y-3 max-h-[500px] overflow-auto">
+          {% for a in apps %}
+            <a class="block p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-white border border-slate-100 hover:border-primary/30 hover:shadow-md transition-all card-interactive" href="{{ url_for('admin.application', app_id=a.id) }}">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-semibold text-slate-800">#{{ a.id }} • {{ a.class_fee.class_name }}</div>
+                  <div class="text-sm text-slate-500">{{ a.user.name }} • {{ a.user.email }}</div>
+                </div>
+                <div class="text-right">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {% if a.status == 'accepted' %}bg-green-100 text-green-700{% elif a.status == 'rejected' %}bg-red-100 text-red-700{% else %}bg-amber-100 text-amber-700{% endif %}">{{ a.status }}</span>
+                  <div class="text-sm text-primary font-medium mt-1">{{ a.total_discount_pct }}% off</div>
+                </div>
+              </div>
+            </a>
+          {% else %}
+            <div class="text-center py-8 text-slate-400">
+              <div class="text-4xl mb-2">📭</div>
+              <p>No applications yet.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

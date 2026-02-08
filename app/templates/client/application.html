@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Application — Molayman Lottery Foundation{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <!-- Header with caricature -->
+    <div class="flex items-center justify-between gap-4 mb-8 fade-in">
+      <div class="flex items-center gap-4">
+        <img 
+          src="{{ url_for('static', filename='images/caricatures/money.png') }}" 
+          alt="Application" 
+          class="w-16 h-16 rounded-xl object-cover caricature"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="hidden w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center text-3xl">🎓</div>
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">{{ app.class_fee.class_name }}</h2>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if app.status == 'accepted' %}bg-green-100 text-green-700{% elif app.status == 'rejected' %}bg-red-100 text-red-700{% else %}bg-amber-100 text-amber-700{% endif %}">{{ app.status }}</span>
+          </div>
+        </div>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('client.dashboard') }}">Back</a>
+    </div>
+
+    <div class="card rounded-3xl p-5 mb-6 bg-white/90 border border-slate-200">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <div class="text-xs text-slate-500">Your Journey</div>
+          <div class="text-lg font-bold text-slate-800">🔥 Streak: {{ streak_days }} day{% if streak_days != 1 %}s{% endif %}</div>
+        </div>
+        <a class="btn btn-secondary text-sm" href="{{ url_for('client.games', app_id=app.id) }}">🎮 Play games</a>
+      </div>
+      {% if recent_badges and recent_badges|length > 0 %}
+        <div class="mt-3 flex flex-wrap gap-2">
+          {% for b in recent_badges %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">{{ b.icon }} {{ b.title }}</span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="mt-2 text-sm text-slate-500">Badges will appear here as you play.</div>
+      {% endif %}
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Payment Section -->
+      <div class="card rounded-3xl p-6 fade-in stagger-1">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center text-white text-xl">💳</div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-800">Payment</h3>
+            <p class="text-slate-500 text-sm">Spin & play first, then pay the final amount</p>
+          </div>
+        </div>
+
+        <!-- Pricing breakdown -->
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between p-4 rounded-xl bg-slate-50">
+            <span class="text-slate-500">Original Fee</span>
+            <span class="font-semibold text-slate-800">{{ app.fee_amount|bdt }}</span>
+          </div>
+          <div class="flex justify-between p-4 rounded-xl bg-primary/5">
+            <div>
+              <span class="text-slate-600">Total Discount</span>
+              <div class="text-xs text-slate-400">Spin {{ app.spin_discount_pct }}% + Games {{ app.games_discount_pct }}%{% if app.bonus_discount_pct %} + Bonus {{ app.bonus_discount_pct }}%{% endif %}</div>
+            </div>
+            <span class="font-bold text-xl text-primary">{{ app.total_discount_pct }}%</span>
+          </div>
+          <div class="flex justify-between p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200">
+            <span class="text-emerald-700 font-medium">Final Amount</span>
+            <span class="font-bold text-2xl text-emerald-600">{{ app.discounted_amount|bdt }}</span>
+          </div>
+        </div>
+
+        {% if app.payment_method %}
+          <div class="p-4 rounded-xl bg-green-50 border border-green-200 text-green-800">
+            <strong>✅ Payment Submitted</strong><br>
+            Method: {{ app.payment_method }} • Discounts are locked.
+          </div>
+        {% else %}
+          <form method="post" action="{{ url_for('client.payment', app_id=app.id) }}" enctype="multipart/form-data" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <label class="relative flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" name="method" value="bkash" class="sr-only" {% if app.payment_method=='bkash' %}checked{% endif %} />
+                <span class="text-2xl">bKash</span>
+                <span class="font-medium">bKash</span>
+              </label>
+              <label class="relative flex items-center gap-3 p-4 rounded-xl border-2 border-slate-200 cursor-pointer hover:border-primary/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" name="method" value="bank" class="sr-only" {% if app.payment_method=='bank' %}checked{% endif %} />
+                <span class="text-2xl">🏦</span>
+                <span class="font-medium">Bank</span>
+              </label>
+            </div>
+            <input name="reference" placeholder="Transaction / Reference ID" value="{{ app.payment_reference or '' }}" />
+            <input type="file" name="proof" aria-label="Payment proof file" class="text-sm" />
+            <button type="submit" class="btn btn-gradient w-full">Submit Payment</button>
+          </form>
+        {% endif %}
+
+        {% if app.payment_proof_filename %}
+          <p class="mt-3 text-sm text-slate-500">
+            Proof: <a class="text-primary underline" href="{{ url_for('client.uploads', filename=app.payment_proof_filename) }}" target="_blank">View file</a>
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Actions Section -->
+      <div class="space-y-6">
+        <!-- Spin Wheel -->
+        <div class="card rounded-3xl p-6 fade-in stagger-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl">🎡</div>
+            <div>
+              <h3 class="font-bold text-lg text-slate-800">Spin the Wheel</h3>
+              <p class="text-slate-500 text-sm">Win up to 30% discount (one-time)</p>
+            </div>
+          </div>
+          <a href="{{ url_for('client.spin_page', app_id=app.id) }}" class="btn w-full {% if app.discounts_locked or app.spin_discount_pct>0 %}btn-secondary opacity-60 cursor-not-allowed{% else %}btn-gradient{% endif %}">
+            {% if app.discounts_locked %}🔒 Payment submitted (locked){% elif app.spin_discount_pct>0 %}✅ Already spun ({{ app.spin_discount_pct }}% won!){% else %}🎰 Open Spin Wheel{% endif %}
+          </a>
+        </div>
+
+        <!-- Mini Games -->
+        <div class="card rounded-3xl p-6 fade-in stagger-3">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-xl">🎮</div>
+            <div>
+              <h3 class="font-bold text-lg text-slate-800">Molayman Mini-Games</h3>
+              <p class="text-slate-500 text-sm">Play games to increase discount (cap 70%)</p>
+            </div>
+          </div>
+          <a href="{{ url_for('client.games', app_id=app.id) }}" class="btn w-full {% if app.discounts_locked %}btn-secondary opacity-60 cursor-not-allowed{% else %}btn-primary{% endif %}">
+            {% if app.discounts_locked %}🔒 Payment submitted (locked){% else %}🎮 Play 15+ Games{% endif %}
+          </a>
+        </div>
+
+        <!-- Chat -->
+        <div class="card rounded-3xl p-6 fade-in stagger-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-xl">💬</div>
+            <div>
+              <h3 class="font-bold text-lg text-slate-800">Chat with Admin</h3>
+              <p class="text-slate-500 text-sm">Talk to <span class="text-primary">I am Molay Man</span></p>
+            </div>
+          </div>
+          <a href="{{ url_for('client.chat', app_id=app.id) }}" class="btn btn-secondary w-full">Open Chat</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Scores -->
+    <div class="mt-8 card rounded-3xl p-6 fade-in stagger-5">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-lg">🏆</div>
+        <h3 class="font-bold text-lg text-slate-800">Recent Game Scores</h3>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {% for s in scores[:8] %}
+          <div class="p-4 rounded-xl bg-gradient-to-r from-slate-50 to-white border border-slate-100">
+            <div class="font-medium text-slate-800">{{ s.game_key }}</div>
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-sm text-slate-500">Score: {{ s.score }}</span>
+              {% if s.is_flagged %}
+                <span class="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Flagged</span>
+              {% else %}
+                <span class="text-sm font-bold text-primary">+{{ s.earned_discount_pct }}%</span>
+              {% endif %}
+            </div>
+            {% if s.is_flagged and s.flag_reason %}
+              <div class="mt-2 text-xs text-slate-500">Reason: {{ s.flag_reason }}</div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="col-span-full text-center py-8 text-slate-400">
+            <div class="text-3xl mb-2">🎮</div>
+            <p>No game scores yet. Play some games!</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

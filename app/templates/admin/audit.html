@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log — Admin{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-3xl font-bold text-slate-800">Audit Log</h2>
+        <p class="text-slate-500 mt-1">Latest admin actions (last 200)</p>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('admin.dashboard') }}">Back</a>
+    </div>
+
+    <div class="card rounded-3xl p-6">
+      <div class="overflow-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-slate-500">
+              <th class="py-2 pr-4">Time</th>
+              <th class="py-2 pr-4">Admin</th>
+              <th class="py-2 pr-4">Action</th>
+              <th class="py-2 pr-4">Target</th>
+              <th class="py-2 pr-4">Detail</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-700">
+            {% for row in logs %}
+              <tr class="border-t border-slate-100 align-top">
+                <td class="py-3 pr-4 whitespace-nowrap text-slate-500">{{ row.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="py-3 pr-4 whitespace-nowrap">{{ row.admin.email }}</td>
+                <td class="py-3 pr-4 whitespace-nowrap font-semibold">{{ row.action }}</td>
+                <td class="py-3 pr-4 whitespace-nowrap">
+                  {% if row.target_type and row.target_id %}
+                    {{ row.target_type }} #{{ row.target_id }}
+                  {% elif row.target_type %}
+                    {{ row.target_type }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td class="py-3 pr-4 max-w-[520px] break-words text-slate-600">{{ row.detail or '—' }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td class="py-6 text-slate-400" colspan="5">No audit logs yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

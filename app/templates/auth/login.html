@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Login — Molayman Lottery Foundation{% endblock %}
+{% block content %}
+  <div class="flex-1 flex items-center justify-center py-12 w-full px-8 sm:px-12">
+    <div class="w-full max-w-md">
+      <div class="card rounded-3xl p-8 fade-in">
+        <!-- Caricature -->
+        <div class="flex justify-center mb-6">
+          <img 
+            src="{{ url_for('static', filename='images/caricatures/welcome.png') }}" 
+            alt="Welcome" 
+            class="w-24 h-24 rounded-full object-cover caricature"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
+          <div class="hidden w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center text-4xl">👋</div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-center text-slate-800">Welcome Back!</h2>
+        <p class="text-slate-500 text-center mt-1">Sign in to continue your journey</p>
+
+        <form method="post" class="mt-8 space-y-5">
+          {{ form.hidden_tag() }}
+          <div>
+            <label class="text-sm font-medium text-slate-700">Email</label>
+            {{ form.email(class_='mt-2 w-full', placeholder='your@email.com') }}
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700">Password</label>
+            {{ form.password(class_='mt-2 w-full', placeholder='••••••••') }}
+          </div>
+          <button type="submit" class="btn btn-primary w-full">{{ form.submit.label.text }}</button>
+        </form>
+
+        <div class="mt-4 text-sm text-center">
+          <a class="text-primary font-medium hover:underline" href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
+        </div>
+
+        <p class="mt-6 text-sm text-center text-slate-500">
+          Don't have an account? <a class="text-primary font-medium hover:underline" href="{{ url_for('auth.signup') }}">Sign up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

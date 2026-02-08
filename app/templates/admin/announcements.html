@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Announcements — Admin{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-3xl font-bold text-slate-800">Announcements</h2>
+        <p class="text-slate-500 mt-1">Shown on client dashboard</p>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('admin.dashboard') }}">Back</a>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <div class="card rounded-3xl p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4">Create</h3>
+        <form method="post" action="{{ url_for('admin.announcements_create') }}" class="space-y-3">
+          <div>
+            <label class="block text-xs text-slate-500" for="title">Title</label>
+            <input id="title" name="title" type="text" class="mt-1 w-full" maxlength="120" placeholder="e.g., Weekly challenge is live" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500" for="body">Body</label>
+            <textarea id="body" name="body" class="mt-1 w-full" rows="4" placeholder="Write the message for students..."></textarea>
+          </div>
+          <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" name="is_active" value="1" class="rounded" checked />
+            Make active (only one active at a time)
+          </label>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+      </div>
+
+      <div class="card rounded-3xl p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4">Recent</h3>
+        <div class="space-y-3">
+          {% for a in rows %}
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-white border border-slate-100">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="font-semibold text-slate-800 truncate">{{ a.title }}</div>
+                  <div class="text-sm text-slate-600 mt-1">{{ a.body }}</div>
+                  <div class="text-xs text-slate-400 mt-2">{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                <form method="post" action="{{ url_for('admin.announcements_toggle', announcement_id=a.id) }}">
+                  <button type="submit" class="btn text-sm {% if a.is_active %}btn-primary{% else %}btn-secondary{% endif %}">
+                    {% if a.is_active %}Active{% else %}Inactive{% endif %}
+                  </button>
+                </form>
+              </div>
+            </div>
+          {% else %}
+            <div class="text-center py-10 text-slate-400">
+              <div class="text-4xl mb-2">📣</div>
+              <p>No announcements yet.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

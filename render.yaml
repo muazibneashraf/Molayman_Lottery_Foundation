@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: molayman-lottery-foundation
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    preDeployCommand: python -m flask --app wsgi:app db upgrade
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTO_CREATE_DB
+        value: "false"
+      - key: MAIL_SERVER
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USE_TLS
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false

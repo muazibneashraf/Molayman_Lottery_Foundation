@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block title %}Spin the Wheel — Molayman Lottery Foundation{% endblock %}
+{% block content %}
+  <div class="py-8 w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 mb-8 fade-in">
+      <div class="flex items-center gap-4">
+        <img 
+          src="{{ url_for('static', filename='images/caricatures/spin.png') }}" 
+          alt="Spin" 
+          class="w-16 h-16 rounded-xl object-cover caricature"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="hidden w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 items-center justify-center text-3xl">🎡</div>
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Spin the Wheel</h2>
+          <p class="text-slate-500">{{ app.class_fee.class_name }} — Win up to 30% discount!</p>
+        </div>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('client.application', app_id=app.id) }}">Back</a>
+    </div>
+
+    <div class="flex flex-col items-center justify-center">
+      <div class="relative fade-in stagger-1">
+        <!-- Wheel glow effect -->
+        <div class="wheel-glow absolute inset-0"></div>
+
+        <!-- Wheel pointer -->
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+          <div class="w-0 h-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent border-t-primary drop-shadow-lg"></div>
+        </div>
+
+        <!-- Wheel container -->
+        <div class="relative w-80 h-80 md:w-96 md:h-96">
+          <canvas id="wheelCanvas" class="w-full h-full rounded-full shadow-2xl"></canvas>
+          
+          <!-- Center button -->
+          <button id="spinBtn" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary text-white font-bold text-lg shadow-xl hover:scale-105 transition-transform z-10 {% if app.spin_discount_pct > 0 or app.discounts_locked %}opacity-50 cursor-not-allowed{% endif %}" {% if app.spin_discount_pct > 0 or app.discounts_locked %}disabled{% endif %}>
+            {% if app.spin_discount_pct > 0 %}DONE{% elif app.discounts_locked %}LOCKED{% else %}SPIN{% endif %}
+          </button>
+        </div>
+      </div>
+
+      <!-- Result display -->
+      <div id="resultBox" class="mt-8 card rounded-3xl p-8 text-center opacity-0 transition-all duration-500 scale-95 fade-in stagger-2">
+        <div class="text-6xl font-bold text-gradient" id="resultPct">0%</div>
+        <div class="text-slate-500 mt-2">Discount Won!</div>
+      </div>
+
+      {% if app.spin_discount_pct > 0 %}
+      <div class="mt-6 card rounded-2xl px-8 py-6 text-center fade-in stagger-3 success-pulse">
+        <div class="text-slate-500">You already spun and won</div>
+        <div class="text-4xl font-bold text-gradient mt-2">{{ app.spin_discount_pct }}%</div>
+      </div>
+      {% endif %}
+
+      <!-- Confetti container -->
+      <div id="confetti" class="fixed inset-0 pointer-events-none z-50"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const spinBtn = document.getElementById('spinBtn');
+      const resultBox = document.getElementById('resultBox');
+      const resultPct = document.getElementById('resultPct');
+      const confettiEl = document.getElementById('confetti');
+
+      // High DPI canvas
+      const size = 384;
+      canvas.width = size * 2;
+      canvas.height = size * 2;
+      ctx.scale(2, 2);
+
+      const segments = [
+        { pct: 0, color: '#94a3b8', label: '0%' },
+        { pct: 5, color: '#8b5cf6', label: '5%' },
+        { pct: 10, color: '#3b82f6', label: '10%' },
+        { pct: 12, color: '#06b6d4', label: '12%' },
+        { pct: 15, color: '#10b981', label: '15%' },
+        { pct: 18, color: '#22c55e', label: '18%' },
+        { pct: 20, color: '#eab308', label: '20%' },
+        { pct: 25, color: '#f97316', label: '25%' },
+        { pct: 30, color: '#ef4444', label: '30%' },
+      ];
+
+      const segmentAngle = (2 * Math.PI) / segments.length;
+      let rotation = 0;
+      let spinning = false;
+
+      function drawWheel() {
+        ctx.clearRect(0, 0, size, size);
+        const cx = size / 2;
+        const cy = size / 2;
+        const radius = size / 2 - 10;
+
+        segments.forEach((seg, i) => {
+          const startAngle = rotation + i * segmentAngle;
+          const endAngle = startAngle + segmentAngle;
+
+          // Draw segment
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, radius, startAngle, endAngle);
+          ctx.closePath();
+          ctx.fillStyle = seg.color;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          // Draw label
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(startAngle + segmentAngle / 2);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 20px Inter, system-ui';
+          ctx.shadowColor = 'rgba(0,0,0,0.3)';
+          ctx.shadowBlur = 4;
+          ctx.fillText(seg.label, radius - 20, 7);
+          ctx.restore();
+        });
+
+        // Inner circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, 55, 0, 2 * Math.PI);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(99, 102, 241, 0.2)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      drawWheel();
+
+      function easeOut(t) {
+        return 1 - Math.pow(1 - t, 4);
+      }
+
+      function spinWheel(targetPct) {
+        if (spinning) return;
+        spinning = true;
+
+        const targetIndex = segments.findIndex(s => s.pct === targetPct);
+        const targetAngle = -Math.PI / 2 - (targetIndex * segmentAngle + segmentAngle / 2);
+        const totalRotation = targetAngle - rotation + (Math.PI * 2 * (5 + Math.random() * 3));
+
+        const duration = 5000;
+        const start = performance.now();
+        const startRotation = rotation;
+
+        function animate(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeOut(progress);
+
+          rotation = startRotation + totalRotation * eased;
+          drawWheel();
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            spinning = false;
+            showResult(targetPct);
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      function showResult(pct) {
+        resultPct.textContent = pct + '%';
+        resultBox.classList.remove('opacity-0', 'scale-95');
+        resultBox.classList.add('opacity-100', 'scale-100');
+
+        if (pct > 0) {
+          launchConfetti();
+        }
+
+        // Submit to server
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch('{{ url_for("client.spin_submit", app_id=app.id) }}', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrf },
+          credentials: 'same-origin'
+        }).then(() => {
+          setTimeout(() => {
+            window.location.href = '{{ url_for("client.application", app_id=app.id) }}';
+          }, 3000);
+        });
+      }
+
+      function launchConfetti() {
+        const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+        for (let i = 0; i < 100; i++) {
+          const piece = document.createElement('div');
+          piece.className = 'confetti-piece';
+          piece.style.left = Math.random() * 100 + 'vw';
+          piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.animationDelay = Math.random() * 0.5 + 's';
+          piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+          piece.style.width = (5 + Math.random() * 10) + 'px';
+          piece.style.height = piece.style.width;
+          confettiEl.appendChild(piece);
+        }
+        setTimeout(() => confettiEl.innerHTML = '', 4000);
+      }
+
+      {% if app.spin_discount_pct == 0 and not app.discounts_locked %}
+      spinBtn.addEventListener('click', () => {
+        if (spinning) return;
+        spinBtn.disabled = true;
+        spinBtn.textContent = '...';
+
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch('{{ url_for("client.spin_result", app_id=app.id) }}', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrf },
+          credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+          spinWheel(data.discount);
+        })
+        .catch(() => {
+          spinBtn.disabled = false;
+          spinBtn.textContent = 'SPIN';
+        });
+      });
+      {% endif %}
+    })();
+  </script>
+{% endblock %}

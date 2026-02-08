@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Chat — Molayman Lottery Foundation{% endblock %}
+{% block content %}
+  <div class="flex-1 py-8 flex flex-col w-full px-8 sm:px-12 lg:px-20 xl:px-32">
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 mb-6 fade-in">
+      <div class="flex items-center gap-4">
+        <img 
+          src="{{ url_for('static', filename='images/caricatures/chat.png') }}" 
+          alt="Chat" 
+          class="w-14 h-14 rounded-xl object-cover caricature"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="hidden w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center text-2xl">💬</div>
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Chat with Admin</h2>
+          <p class="text-slate-500">{{ app.class_fee.class_name }} • Admin: <span class="text-primary font-medium">I am Molay Man</span></p>
+        </div>
+      </div>
+      <a class="btn btn-secondary text-sm" href="{{ url_for('client.application', app_id=app.id) }}">Back</a>
+    </div>
+
+    <!-- Chat container -->
+    <div class="card rounded-3xl p-6 flex-1 flex flex-col fade-in stagger-1">
+      <div class="flex-1 space-y-4 overflow-auto pr-2 mb-4 chat-scroll-area">
+        {% for m in messages %}
+          <div class="{% if m.sender_role=='client' %}flex justify-end{% else %}flex justify-start{% endif %}">
+            <div class="max-w-[80%] {% if m.sender_role=='client' %}bg-gradient-to-r from-primary to-primary/90 text-white{% else %}bg-slate-100 text-slate-800{% endif %} rounded-2xl px-4 py-3">
+              <div class="text-xs {% if m.sender_role=='client' %}text-white/70{% else %}text-slate-400{% endif %} mb-1">{{ m.sender_name }} • {{ m.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+              <div class="whitespace-pre-wrap">{{ m.message }}</div>
+            </div>
+          </div>
+        {% else %}
+          <div class="text-center py-12 text-slate-400">
+            <div class="text-4xl mb-2">💭</div>
+            <p>No messages yet. Start the conversation!</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="{{ url_for('client.chat_send', app_id=app.id) }}" class="flex gap-3 pt-4 border-t border-slate-100">
+        <input name="message" class="flex-1" placeholder="Type a message…" required />
+        <button type="submit" class="btn btn-primary">Send →</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -34,7 +35,18 @@ def create_app() -> Flask:
     default_db_path = Path(app.instance_path) / "app.db"
     default_db_uri = f"sqlite:///{default_db_path.as_posix()}"
 
-    db_uri = os.getenv("DATABASE_URL") or default_db_uri
+    raw_db_uri = os.getenv("DATABASE_URL")
+    db_uri = (raw_db_uri or "").strip()
+    # Render dashboard sometimes leads people to paste labeled values like:
+    # "Internal Database URL: postgresql://...". Extract the URL if needed.
+    if db_uri and (" " in db_uri or "\n" in db_uri):
+        match = re.search(r"(postgres(?:ql)?://\S+|sqlite:////?\S+)", db_uri)
+        if match:
+            db_uri = match.group(1)
+    db_uri = db_uri.strip().strip('"').strip("'")
+    if not db_uri:
+        db_uri = default_db_uri
+
     # Render/Heroku style URLs use postgres:// which SQLAlchemy doesn't accept.
     if db_uri.startswith("postgres://"):
         db_uri = db_uri.replace("postgres://", "postgresql://", 1)

@@ -32,15 +32,14 @@ Optional:
 
 ## 3) Migrations
 
-Render runs migrations automatically on deploy via:
-
-- `python -m flask --app wsgi:app db upgrade`
+Render free tier doesn't support `preDeployCommand`. This repo runs migrations automatically
+at service start (before Gunicorn) via the `startCommand` in `render.yaml`.
 
 ## 4) Start command
 
 Render runs:
 
-- `gunicorn wsgi:app --bind 0.0.0.0:$PORT`
+- `python -m flask --app wsgi:app db upgrade && gunicorn wsgi:app --bind 0.0.0.0:$PORT`
 
 ## 5) Health check
 

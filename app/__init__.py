@@ -9,6 +9,8 @@ from flask import Flask
 from flask_migrate import stamp as migrate_stamp
 from flask_migrate import upgrade as migrate_upgrade
 from sqlalchemy import inspect
+from sqlalchemy.engine.url import make_url
+from sqlalchemy.exc import ArgumentError
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -50,6 +52,21 @@ def create_app() -> Flask:
     # Render/Heroku style URLs use postgres:// which SQLAlchemy doesn't accept.
     if db_uri.startswith("postgres://"):
         db_uri = db_uri.replace("postgres://", "postgresql://", 1)
+
+    # If DATABASE_URL is malformed (common copy/paste issue on Render), do not crash.
+    # Fall back to local SQLite and log a hint.
+    try:
+        make_url(db_uri)
+    except ArgumentError as e:
+        hint = (raw_db_uri or "").strip().replace("\n", " ")
+        hint = (hint[:120] + "...") if len(hint) > 120 else hint
+        app.logger.error(
+            "Invalid DATABASE_URL; falling back to SQLite. Provide a full URL like "
+            "postgresql://USER:PASSWORD@HOST:PORT/DBNAME . Got: %r (%s)",
+            hint,
+            e,
+        )
+        db_uri = default_db_uri
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-change-me"),

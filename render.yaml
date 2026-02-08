@@ -13,14 +13,14 @@ services:
       - key: AUTO_CREATE_DB
         value: "false"
       - key: MAIL_SERVER
-        sync: false
+        value: ""
       - key: MAIL_PORT
-        sync: false
+        value: "587"
       - key: MAIL_USE_TLS
-        sync: false
+        value: "true"
       - key: MAIL_USERNAME
-        sync: false
+        value: ""
       - key: MAIL_PASSWORD
-        sync: false
+        value: ""
       - key: MAIL_DEFAULT_SENDER
-        sync: false
+        value: ""
